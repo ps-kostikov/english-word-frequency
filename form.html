@@ -1,0 +1,56 @@
+<html>
+	<head>
+		<title>English Word Frequency</title>
+	</head>
+	<body>
+		<h1 style="text-align: center;">
+			<strong>English Word Frequency</strong>
+		</h1>
+
+		<form name="search" method="get" action="?">
+			<p style="text-align: center;">
+				<strong>
+					<input maxlength="32" name="word" size="32" type="text" />
+				</strong>
+				<input type="submit" value="Search" />
+			</p>
+		</form>
+		{% if word %}
+		<p style="text-align: center;">
+			{% if frequency %}
+			<span style="font-size: 22px;">The word 
+				<span style="font-size: 28px;">
+					<strong>{{ word }}</strong>
+				</span> found in position <strong>
+				<span style="font-size: 28px;">{{ frequency }}</span>
+				</strong>
+			</span>
+			{% else %}
+			<span style="font-size: 22px;">Word 
+				<span style="font-size: 28px;">
+					<strong>{{ word }}</strong>
+				</span> is not found</span>
+			{% endif %}
+		</p>
+		{% endif %}
+		{% if position %}
+		<p style="text-align: center;">
+			{% if word_in_position %}
+			<span style="font-size: 22px;">The word 
+				<span style="font-size: 28px;">
+					<strong>{{ word_in_position }}</strong>
+				</span> found in position <strong>
+				<span style="font-size: 28px;">{{ position }}</span>
+				</strong>
+			</span>
+			{% else %}
+			<span style="font-size: 22px;">Dictionary size is less then 
+				<span style="font-size: 28px;">
+					<strong>{{ position }}</strong>
+				</span> </span>
+			{% endif %}
+		</p>
+		{% endif %}
+
+	</body>
+</html>
