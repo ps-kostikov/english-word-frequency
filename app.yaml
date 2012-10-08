@@ -1,8 +1,13 @@
 application: word-frequency
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: no
+
 
 handlers:
-- url: .*
+- url: /(.*\.js)
+  static_files: js/\1
+  upload: js/(.*\.js)
+- url: /.*
   script: main.py
