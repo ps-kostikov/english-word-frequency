@@ -1,25 +1,87 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="jquery.js"></script>
-<script src="jquery-ui.js"></script>
-<script>
-	$(document).ready(function() {
-      $("button").click(function(){
-        $("#div1").html("Some another text");
-      });
-	});
+	<title>English Word Frequency</title>
+
+	<link rel="stylesheet" href="jquery-ui.css" />
+	<script src="jquery.js"></script>
+	<script src="jquery-ui.js"></script>
+	<script>
+		$(document).ready(function() {
+			$("#input").focus();
+
+			$("#input").autocomplete({
+				source: function(request, response) {
+					$.ajax({
+						url: "suggest?begin=" + request.term,
+						dataType: "json",
+						success: function(data) {
+									response($.map(data, function(item) {
+									return {
+										label: item,
+										id: item,
+										abbrev: item
+										};
+								}));
+							}
+						});
+					},
+					minLength: 1
+			});
+
+			$("#input").keyup(function(e) {
+				text = $("#input").val().toLowerCase();
+				$("#input").val(text);
+				if(e.which === 13) {
+            		$("#input").autocomplete("close");
+            		$("#search").click();
+        		}
+			});
+
+			$("#search").click(function() {
+				var input = $("#input").val();
+				if (input == "") {
+					$("#result").html("Please, input the word.");
+					return;
+				}
+				var order = parseInt(input);
+				if (isNaN(order)) {
+					var word = input;
+					$.ajax({url:"order?word=" + word,success:function(result) {
+						orders = eval(result);
+						if (orders.length == 0) {
+							$("#result").html("Word <b>" + word + "</b> is not found.");
+						} else {
+							$("#result").html("The word <b>" + word + "</b> found in position <b>" + orders[0] + "</b>.");
+						}
+					}}); 
+				} else if (order <= 0) {
+					$("#result").html("Invalid index <b>" + order + "</b>. Please, input positive number.");
+				} else {
+					$.ajax({url:"word?order=" + order,success:function(result) {
+						words = eval(result);
+						if (words.length == 0) {
+							$("#result").html("Dictionary size is less than <b>" + order + "</b>.");
+						} else {
+							$("#result").html("The word <b>" + words[0] + "</b> found in position <b>" + order + "</b>.");
+						}
+					}}); 
+				}
+				$("#input").focus();
+				$("#input").val('');
+			});
+		});
 	</script>
 </head>
+
 <body>
-
-<div id="div1" >
-
-Some text
-</div>
-
-<br>
-<button>Do it</button>
+	<div class="ui-widget" style="text-align: center;">
+		<h1>English Word Frequency</h1>
+		<input id="input" type="text" autocomplete="off">
+		<input id="search" type="submit" value="Search">
+		<p id="result"></p>
+	</div>
 </body>
+
 
 </html>
