@@ -6,12 +6,6 @@ threadsafe: no
 
 
 handlers:
-- url: /
-  static_files: form.html
-  upload: form.html
-- url: /index\.html
-  static_files: form.html
-  upload: form.html  
 - url: /(.*\.js)
   static_files: js/\1
   upload: js/(.*\.js)

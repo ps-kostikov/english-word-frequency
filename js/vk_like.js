@@ -1,0 +1,1 @@
+VK.Widgets.Like("vk_like", {type: "button"});

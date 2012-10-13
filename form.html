@@ -1,86 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>English Word Frequency</title>
+	<title>{English Word Frequency}</title>
+
+	<meta name="title" content="{English Word Frequency}" />
+	<meta name="description" content="{Met a new English word? You can find out how often it is used}" />
+	<meta name="keywords" content="Английский, частотность, используемость, слово, English, word, frequency" />
+	<meta name="robots" content="index" />
 
 	<link rel="stylesheet" href="jquery-ui.css" />
 	<script src="jquery.js"></script>
 	<script src="jquery-ui.js"></script>
-	<script>
-		$(document).ready(function() {
-			$("#input").focus();
+	<script src="main.js"></script>
 
-			$("#input").autocomplete({
-				source: function(request, response) {
-					$.ajax({
-						url: "suggest?begin=" + request.term,
-						dataType: "json",
-						success: function(data) {
-									response($.map(data, function(item) {
-									return {
-										label: item,
-										id: item,
-										abbrev: item
-										};
-								}));
-							}
-						});
-					},
-					minLength: 1
-			});
+	<script type="text/javascript" src="//vk.com/js/api/openapi.js?56"></script>
+	<script type="text/javascript" src="vk.js"></script>
 
-			$("#input").keyup(function(e) {
-				text = $("#input").val().toLowerCase();
-				$("#input").val(text);
-				if(e.which === 13) {
-            		$("#input").autocomplete("close");
-            		$("#search").click();
-        		}
-			});
-
-			$("#search").click(function() {
-				var input = $("#input").val();
-				if (input == "") {
-					$("#result").html("Please, input the word.");
-					return;
-				}
-				var order = parseInt(input);
-				if (isNaN(order)) {
-					var word = input;
-					$.ajax({url:"order?word=" + word,success:function(result) {
-						orders = eval(result);
-						if (orders.length == 0) {
-							$("#result").html("Word <b>" + word + "</b> is not found.");
-						} else {
-							$("#result").html("The word <b>" + word + "</b> found in position <b>" + orders[0] + "</b>.");
-						}
-					}}); 
-				} else if (order <= 0) {
-					$("#result").html("Invalid index <b>" + order + "</b>. Please, input positive number.");
-				} else {
-					$.ajax({url:"word?order=" + order,success:function(result) {
-						words = eval(result);
-						if (words.length == 0) {
-							$("#result").html("Dictionary size is less than <b>" + order + "</b>.");
-						} else {
-							$("#result").html("The word <b>" + words[0] + "</b> found in position <b>" + order + "</b>.");
-						}
-					}}); 
-				}
-				$("#input").focus();
-				$("#input").val('');
-			});
-		});
-	</script>
+<!-- Put this div tag to the place, where the Like block will be -->
 </head>
 
 <body>
-	<div class="ui-widget" style="text-align: center;">
-		<h1>English Word Frequency</h1>
-		<input id="input" type="text" autocomplete="off">
-		<input id="search" type="submit" value="Search">
-		<p id="result"></p>
-	</div>
+	<div class="ui-widget" align="center">
+		<h1>{English Word Frequency}</h1>
+
+			<input id="input" type="text" autocomplete="off">
+			<input id="search" type="submit" value="{Search}">
+			<p hidden="true" id="not_found_error">{Word} <b id="word"></b> {is not found}.</p>
+
+			<table id="result">
+			</table>
+
+		<h2 id="description">{Met a new English word? You can find out how often it is used}</h2>
+
+		<div id="vk_like"></div>
+		<script type="text/javascript" src="vk_like.js"></script>
+
+	</div> 
 </body>
 
 

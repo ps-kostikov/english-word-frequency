@@ -25,69 +25,147 @@ import os
 DEBUG = True
 
 
-class Dictionary:
-    def __init__(self, filename):
-        logging.info('dictionary init started')
+def load_dictionary(filename):
+    words = []
+    with open(filename) as fin:
+        for line in fin:
+            word, freq = line.strip().split('\t')
+            words.append(word)
+    return words
 
-        self.words = []
-        with open(filename) as fin:
+
+dictionary = load_dictionary('data/frequency_list.txt')
+
+
+class Language:
+    def __init__(self, langtag):
+        self._langtag = langtag
+
+    def filename(self):
+        return 'translations/{0}.ini'.format(self._langtag)
+
+    def translations(self):
+        result = {}
+        with open(self.filename()) as fin:
             for line in fin:
-                word, freq = line.strip().split('\t')
-                self.words.append(word)
+                key, value = line.strip().split('=')
+                result[key] = value
+        return result
 
-        logging.info('dictionary init finished')
+    def translate(self, html):
+        return html.format(**self.translations())
 
-    def order(self, word):
-        if word not in self.words:
-            return None
-        return self.words.index(word) + 1
 
-    def word(self, order):
-        index = order - 1
-        if index < 0 or index >= len(self.words):
-            return None
-        return self.words[index]
+def get_language(request):
+    default_langtag = 'en'
+    langtag = default_langtag
+    if 'Accept-Language' in request.headers:
+        if request.headers['Accept-Language'].lower().startswith('ru'):
+            langtag = 'ru'
 
-    def suggest(self, begin):
-        suggest_len = 5
-        return filter(lambda w: w.startswith(begin), self.words)[:suggest_len]
-        
-dictionary = Dictionary('data/frequency_list.txt')
+    return Language(langtag)
 
 
 class WordHandler(webapp.RequestHandler):
     def get(self):
         order = int(self.request.get('order'))
-        word = dictionary.word(order)
-        if word is None:
-            self.response.out.write('[]')
+
+        index = order - 1
+        if index < 0 or index >= len(dictionary):
+            self.response.set_status(404)
             return
-        self.response.out.write('["{0}"]'.format(word))
+
+        word = dictionary[index]
+        json = '["{0}"]'.format(word)
+        self.response.out.write(json)
 
 
 class OrderHandler(webapp.RequestHandler):
     def get(self):
         word = self.request.get('word')
-        order = dictionary.order(word)
-        if order is None:
-            self.response.out.write('[]')
+
+        if word not in dictionary:
+            self.response.set_status(404)
             return
-        self.response.out.write('[{0}]'.format(order))
+
+        order = dictionary.index(word) + 1
+        json = '["{0}"]'.format(order)
+        self.response.out.write(json)
 
 
 class SuggestHandler(webapp.RequestHandler):
     def get(self):
         begin = self.request.get('begin')
-        suggest = dictionary.suggest(begin)
-        json = '[' + ', '.join(['"{0}"'.format(s) for s in suggest]) + ']'
+
+        suggest_len = 5
+        words = filter(lambda w: w.startswith(begin), dictionary)[:suggest_len]
+
+        json = '[' + ', '.join(['"{0}"'.format(w) for w in words]) + ']'
         self.response.out.write(json)
+
+
+class MainHandler(webapp.RequestHandler):
+    def get(self):
+        language = get_language(self.request)
+        with open('form.html') as out:
+            html = out.read()
+        translation = language.translate(html)
+        self.response.out.write(translation)
+
+
+class IntervalHandler(webapp.RequestHandler):
+    def get(self):
+        word = self.request.get('word')
+
+        if word.isdigit():
+            self.handle_order(int(word))
+        else:
+            self.handle_word(word)
+
+    def response_by_index(self, index):
+        shift = 2
+        output_size = 5
+
+        l = len(dictionary)
+        if index - shift < 0:
+            begin, end = 0, output_size
+        elif index + shift >= l:
+            begin, end = l - output_size, l
+        else:
+            begin, end = index - shift, index - shift + output_size
+
+        parts = []
+        for i in range(output_size):
+            parts.append('["{word}", "{order}"]'.format(
+                    word = dictionary[begin + i],
+                    order = begin + i + 1
+                    ))
+
+        json = '[' + ', '.join(parts) + ']'
+        self.response.out.write(json)
+
+    def handle_order(self, order):
+        index = order - 1
+        if index < 0 or index >= len(dictionary):
+            self.response.set_status(404)
+            return
+        self.response_by_index(index)
+
+    def handle_word(self, word):
+        if word not in dictionary:
+            self.response.set_status(404)
+            return
+        self.response_by_index(dictionary.index(word))
 
 
 def main():
     handlers = [
+        ('/', MainHandler),
+        ('/index.html', MainHandler),
         ('/word', WordHandler),
         ('/order', OrderHandler),
-        ('/suggest', SuggestHandler)
+        ('/suggest', SuggestHandler),
+        ('/interval', IntervalHandler)
         ]
     application = webapp.WSGIApplication(handlers, debug=True)
     util.run_wsgi_app(application)
